@@ -18,8 +18,8 @@ _phpbs_set_vars() {
     pkgbase_rc=""
     case "$_phpbase" in
         # Actual versions
-        85) pkgver=8.5.8   ; pkgrel=1 ;;
-        84) pkgver=8.4.23  ; pkgrel=1 ;;
+        85) pkgver=8.5.8   ; pkgrel=2 ;;
+        84) pkgver=8.4.23  ; pkgrel=2 ;;
         83) pkgver=8.3.32  ; pkgrel=1 ;;
         82) pkgver=8.2.32  ; pkgrel=1 ;;
         # Not updated anymore
@@ -165,12 +165,9 @@ _phpbs_set_vars() {
     _build_enable_sysvsem=1
     _build_enable_sysvshm=1
     _build_enable_tokenizer=1
-
     _build_enable_zip=1
     _build_enable_gd=1
     _build_enable_ftp=1
-
-
     _build_shared_mysqlnd=1
     _build_shared_gd=1
     _build_shared_json=1
@@ -490,6 +487,9 @@ _phpbs_set_vars() {
     _extension_unavailable_mcrypt=$((_phpbase >= 72));
     _extension_unavailable_sodium=$((_extension_unavailable_mcrypt ^ 1));
     _extension_unavailable_wddx=$((_phpbase >= 74));
+    _extension_unavailable_imap=$((_phpbase >= 84));
+    _extension_unavailable_pspell=$((_phpbase >= 84));
+    _extension_unavailable_opcache=$((_phpbase >= 85));
     _build_shared_libedit=$((_build_phpdbg ^ 1 && _phpbase >= 56));
 
     # SUBPACKAGES list, not extensions!
@@ -846,11 +846,21 @@ _phpbs_set_vars() {
                     sodium | mcrypt | xmlrpc | recode | ffi | iconv | xsl)
                         _phpconfig+=" --without-${i} "
                         ;;
-                    imap | ldap | enchant | curl | mssql | interbase | gmp | bz2 | pspell | tidy | snmp | gettext | firebird)
+                    ldap | enchant | curl | mssql | interbase | gmp | bz2 | tidy | snmp | gettext | firebird)
                         _phpconfig+=" --without-${i} "
                         ;;
-                    dba | opcache | xml | xmlreader | xmlwriter | dom | simplexml | wddx)
+                    dba | xml | xmlreader | xmlwriter | dom | simplexml | wddx)
                         _phpconfig+=" --disable-${i} "
+                        ;;
+                    imap | pspell)
+                        if ((_phpbase < 84)); then
+                            _phpconfig+=" --without-${i} "
+                        fi
+                        ;;
+                    opcache)
+                        if ((_phpbase < 85)); then
+                            _phpconfig+=" --disable-${i} "
+                        fi
                         ;;
                     *)
                         _phpconfig+=" --disable-${i} "
@@ -2201,7 +2211,6 @@ package_php___PHPBASE___-mcrypt___SUFFIX___() {
 ###############################################################################
 # PHP Zend modules: opcache/jit
 ###############################################################################
-
 # Opcache
 package_php___PHPBASE___-opcache___SUFFIX___() {
     pkgdesc="opcache zend module for ___PKGBASE___"
